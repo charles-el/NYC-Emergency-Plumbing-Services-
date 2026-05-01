@@ -32,13 +32,50 @@ function float32ToBase64(float32Array: Float32Array): string {
   return btoa(binary);
 }
 
+function playRingbackTone(ctx: AudioContext) {
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc1.frequency.value = 440;
+  osc2.frequency.value = 480;
+  
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(ctx.destination);
+  
+  const now = ctx.currentTime;
+  gain.gain.setValueAtTime(0, now);
+  
+  // Ring 1 (0 to 2s)
+  gain.gain.setValueAtTime(0.05, now + 0.1);
+  gain.gain.setValueAtTime(0.05, now + 2);
+  gain.gain.linearRampToValueAtTime(0, now + 2.1);
+  
+  // Ring 2 (4s to 6s)
+  gain.gain.setValueAtTime(0, now + 4);
+  gain.gain.linearRampToValueAtTime(0.05, now + 4.1);
+  gain.gain.setValueAtTime(0.05, now + 6);
+  gain.gain.linearRampToValueAtTime(0, now + 6.1);
+
+  osc1.start(now);
+  osc2.start(now);
+  
+  return () => {
+    try { osc1.stop(); osc2.stop(); } catch(e) {}
+    try { gain.disconnect(); } catch(e) {}
+  };
+}
+
 export default function LiveVoiceWidget() {
   const [isCalling, setIsCalling] = useState(false);
+  const [isRinging, setIsRinging] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const ringNodeRef = useRef<(() => void) | null>(null);
   const playbackTimeRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const scriptNodeRef = useRef<ScriptProcessorNode | null>(null);
@@ -67,6 +104,19 @@ export default function LiveVoiceWidget() {
       const audioCtx = new OutCtx({ sampleRate: 24000 });
       audioCtxRef.current = audioCtx;
       playbackTimeRef.current = audioCtx.currentTime;
+
+      setIsRinging(true);
+      ringNodeRef.current = playRingbackTone(audioCtx);
+
+      await new Promise(resolve => setTimeout(resolve, 3700)); // Play 1 full ring + 1.7s gap
+
+      if (ringNodeRef.current) {
+        ringNodeRef.current();
+        ringNodeRef.current = null;
+      }
+      setIsRinging(false);
+      
+      if (!mediaStreamRef.current) return; // call was cancelled
 
       // Input from Mic
       // We will create a parallel context to ensure input is strictly 16kHz
@@ -189,6 +239,12 @@ export default function LiveVoiceWidget() {
   const endCall = () => {
     setIsConnected(false);
     setIsCalling(false);
+    setIsRinging(false);
+    
+    if (ringNodeRef.current) {
+      ringNodeRef.current();
+      ringNodeRef.current = null;
+    }
     
     if (sessionRef.current) {
       try { sessionRef.current.close(); } catch(e){}
@@ -252,7 +308,7 @@ export default function LiveVoiceWidget() {
               </div>
               <h3 className="font-bold text-xl mb-1">Mack</h3>
               <p className="text-sm text-slate-400">
-                {isCalling ? 'Connecting...' : 'Live Call Connection'}
+                {isRinging ? 'Ringing...' : isCalling ? 'Connecting...' : 'Live Call Connection'}
               </p>
               {errorMsg && <p className="text-xs text-brand-red mt-2 px-4">{errorMsg}</p>}
             </div>

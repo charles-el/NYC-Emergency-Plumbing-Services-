@@ -60,10 +60,10 @@ export default function App() {
             </div>
             <div>
               <h1 className={`font-display font-semibold text-[22px] tracking-tight leading-none ${isScrolled ? 'text-slate-900' : 'text-white drop-shadow-md'}`}>
-                Mack
+                NYC
               </h1>
               <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-1 ${isScrolled ? 'text-slate-500' : 'text-white/80'}`}>
-                Emergency Plumbers
+                Emergency Plumber's
               </p>
             </div>
           </div>

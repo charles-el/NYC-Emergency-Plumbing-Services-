@@ -15,7 +15,7 @@ export default function AIChatWidget() {
     {
       id: '1',
       role: 'assistant',
-      content: "Hello! I'm Mack, the NEW YORK CITY Emergency Plumber RECEPTIONIST. How may I help you today? Are you experiencing a plumbing emergency? Tell me what's happening."
+      content: "Hello! I'm Mack, the NYC Emergency RECEPTIONIST. How may I help you today? Are you experiencing a plumbing emergency? Tell me what's happening."
     }
   ]);
   const [input, setInput] = useState('');
