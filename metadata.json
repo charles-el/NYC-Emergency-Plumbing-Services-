@@ -1,0 +1,8 @@
+{
+  "name": "NYC Emergency Plumber - Mack",
+  "description": "24/7 Emergency plumbing and sewer services in Manhattan, featuring Mack, our dispatcher for instant bookings and voice support.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": []
+}
